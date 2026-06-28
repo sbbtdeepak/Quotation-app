@@ -4,11 +4,9 @@ import markdown
 from fpdf import FPDF
 import re
 
-# Page setup
 st.set_page_config(page_title="AI Construction Quotation", layout="centered")
 st.title("🏗️ AI Construction Quotation Generator")
 
-# Sidebar
 st.sidebar.header("🔑 Settings")
 api_key = st.secrets.get("DEEPSEEK_API_KEY")
 if not api_key:
@@ -27,7 +25,6 @@ Plumbing: 180
 Labour: 350
 """)
 
-# Main Form
 st.header("📋 Client Requirements")
 col1, col2 = st.columns(2)
 with col1:
@@ -40,11 +37,9 @@ with col2:
 specific_req = st.text_area("Specific Requirements (e.g., Premium Tiles)")
 package_data = st.text_area("📦 Paste Your Construction Package Rates here", height=150)
 
-# Session state
 if 'quotation' not in st.session_state:
     st.session_state.quotation = None
 
-# Generate Button
 if st.button("🚀 Generate New Quotation", type="primary"):
     if not api_key:
         st.error("❌ API Key missing in Streamlit Secrets!")
@@ -55,7 +50,6 @@ if st.button("🚀 Generate New Quotation", type="primary"):
             try:
                 client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
                 total_area = plot_size * floors
-                
                 prompt = f"""
                 You are a professional construction cost estimator.
                 RATE CARD:
@@ -70,21 +64,17 @@ if st.button("🚀 Generate New Quotation", type="primary"):
                 2. If special requirements exist, add a 10-20% premium.
                 3. Output in professional Markdown format with Grand Total, Validity, and T&C.
                 """
-                
                 response = client.chat.completions.create(
                     model="deepseek-chat",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3
                 )
-                
                 raw = response.choices[0].message.content
                 st.session_state.quotation = raw
                 st.success("✅ Quotation Generate Ho Gaya!")
-                
             except Exception as e:
                 st.error(f"⚠️ Error: {e}")
 
-# Display Quotation and PDF Download
 if st.session_state.quotation:
     st.markdown("---")
     st.markdown(st.session_state.quotation)
@@ -93,24 +83,20 @@ if st.session_state.quotation:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=11)
-        
         clean_text = re.sub(r'\\(.?)\\*', r'\1', text)
         clean_text = re.sub(r'\(.?)\*', r'\1', clean_text)
         clean_text = re.sub(r'#{1,6} ', '', clean_text)
         clean_text = re.sub(r'\|', ' ', clean_text)
         clean_text = re.sub(r'-+', '', clean_text)
-        
         lines = clean_text.split('\n')
         for line in lines:
             if line.strip() == "":
                 pdf.ln(5)
             else:
                 pdf.multi_cell(0, 6, line.strip())
-        
         return pdf.output(dest='S').encode('latin-1')
 
     pdf_data = generate_pdf(st.session_state.quotation)
-    
     st.download_button(
         label="📥 Download Quotation as PDF",
         data=pdf_data,
