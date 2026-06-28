@@ -1,5 +1,6 @@
 import streamlit as st
-from openai import OpenAI
+import requests
+import json
 import markdown
 from fpdf import FPDF
 import re
@@ -48,7 +49,6 @@ if st.button("🚀 Generate New Quotation", type="primary"):
     else:
         with st.spinner("DeepSeek AI calculate kar raha hai..."):
             try:
-                client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
                 total_area = plot_size * floors
                 prompt = f"""
                 You are a professional construction cost estimator.
@@ -64,14 +64,29 @@ if st.button("🚀 Generate New Quotation", type="primary"):
                 2. If special requirements exist, add a 10-20% premium.
                 3. Output in professional Markdown format with Grand Total, Validity, and T&C.
                 """
-                response = client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3
+                
+                # --- DeepSeek API को सीधे Call करना (बिना openai लाइब्रेरी के) ---
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": "deepseek-chat",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3
+                }
+                
+                response = requests.post(
+                    "https://api.deepseek.com/v1/chat/completions",
+                    headers=headers,
+                    json=payload
                 )
-                raw = response.choices[0].message.content
+                response.raise_for_status()
+                raw = response.json()["choices"][0]["message"]["content"]
+                
                 st.session_state.quotation = raw
                 st.success("✅ Quotation Generate Ho Gaya!")
+                
             except Exception as e:
                 st.error(f"⚠️ Error: {e}")
 
