@@ -1,4 +1,3 @@
-Version 0
 import streamlit as st
 from openai import OpenAI
 import markdown
@@ -90,23 +89,21 @@ if st.session_state.quotation:
     st.markdown("---")
     st.markdown(st.session_state.quotation)
     
-    # PDF Generator Function (Ab Weasyprint nahi, fpdf use karega)
     def generate_pdf(text):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=11)
         
-        # Markdown ko saaf karke plain text mein convert karna (tables aur bold hatao)
-        clean_text = re.sub(r'\\(.?)\\*', r'\1', text)  # Bold hatao
-        clean_text = re.sub(r'\(.?)\*', r'\1', clean_text) # Italic hatao
-        clean_text = re.sub(r'#{1,6} ', '', clean_text)      # Headings hatao
-        clean_text = re.sub(r'\|', ' ', clean_text)          # Table ke | hatao
-        clean_text = re.sub(r'-+', '', clean_text)           # Line hatao
+        clean_text = re.sub(r'\\(.?)\\*', r'\1', text)
+        clean_text = re.sub(r'\(.?)\*', r'\1', clean_text)
+        clean_text = re.sub(r'#{1,6} ', '', clean_text)
+        clean_text = re.sub(r'\|', ' ', clean_text)
+        clean_text = re.sub(r'-+', '', clean_text)
         
         lines = clean_text.split('\n')
         for line in lines:
             if line.strip() == "":
-                pdf.ln(5)  # Line gap
+                pdf.ln(5)
             else:
                 pdf.multi_cell(0, 6, line.strip())
         
